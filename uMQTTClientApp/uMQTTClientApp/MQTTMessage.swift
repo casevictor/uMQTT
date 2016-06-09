@@ -66,6 +66,12 @@ enum CONNACKReturnCode : UInt8 {
     case NOT_AUTHORIZED     = 0b00000101
 }
 
+enum QOS : UInt8 {
+    case QOS0 = 0b00000000
+    case QOS1 = 0b00000001
+    case QOS2 = 0b00000010
+}
+
 enum SUBACKReturnCode : UInt8 {
     case MAXQoS0 = 0b00000000
     case MAXQoS1 = 0b00000001
@@ -81,6 +87,8 @@ protocol uMQTTDelegate: class {
 class uMQTTClient {
     var status : ClientStatus
     var currentFrame : uMQTTControlFrameType
+    var currentRemainingLength : UInt8 = 0
+    var currentFrameFlags : UInt8 = 0b0000
     
     init(){
         status = ClientStatus.UNPACK_HEADER
@@ -168,8 +176,24 @@ class uMQTT : NSObject, NSStreamDelegate {
         
     }
     
+    private func disconnectSocket() -> () {
+        let socketStatus : NSStreamStatus = outputStream!.streamStatus
+        switch socketStatus {
+        case .Open:
+            inputStream!.close()
+            outputStream!.close()
+            print("Sockets closed")
+        default:
+            break
+        }
+    }
+    
     func openMQTTSocket() -> (){
         print("Socket Status: \(self.connectSocket(self.host as String, port: self.port))")
+    }
+    
+    func disconnectMQTTSocket() -> (){
+        self.disconnectSocket()
     }
     
     func connect() -> () {
@@ -180,8 +204,20 @@ class uMQTT : NSObject, NSStreamDelegate {
         self.outputStream!.write(bytesToWire, maxLength: bytesToWire.count)
     }
     
+    func disconnect() -> () {
+        let frame : uMQTTDisconnectFrame = uMQTTDisconnectFrame()
+        let bytesToWire = frame.buildFrame()
+        self.outputStream!.write(bytesToWire, maxLength: bytesToWire.count)
+    }
+    
     func subscribe(topic: String) -> () {
         let frame : uMQTTSubscribeFrame = uMQTTSubscribeFrame(topic: topic)
+        let bytesToWire = frame.buildFrame()
+        self.outputStream!.write(bytesToWire, maxLength: bytesToWire.count)
+    }
+    
+    func puback(packetIdentifier: UInt16) -> (){
+        let frame : uMQTTPUBACKFrame = uMQTTPUBACKFrame(packetIdentifier: packetIdentifier)
         let bytesToWire = frame.buildFrame()
         self.outputStream!.write(bytesToWire, maxLength: bytesToWire.count)
     }
@@ -218,11 +254,38 @@ class uMQTT : NSObject, NSStreamDelegate {
             default:
                 print("Payload not recognized")
             }
+            00000000
+            11111111
             
             print("-- Packet Identifier -- \(frame[0]) \(frame[1])")
         case .PUBLISH:
-            print(frame)
-            //TODO
+            let dup = (client.currentFrameFlags & 0b00001000) >> 3
+            let qos = (client.currentFrameFlags & 0b00000110) >> 1
+            let ret = (client.currentFrameFlags & 0b00000001)
+            
+            let len = (Int)(frame[1] | frame[0] << 4)
+            let payload_len = (Int)(client.currentRemainingLength)
+            var startIndex = 2
+            let topic : String = String(bytes: frame[startIndex..<(startIndex+len)], encoding: NSUTF8StringEncoding)!
+            let packetIdentifier : UInt16 = ((UInt16)(frame[(startIndex+len)]) << 8) | (UInt16)(frame[(startIndex+len)+2] & 0b0000000011111111)
+            startIndex = (startIndex+len)+2
+            let payload : String = String(bytes: frame[startIndex..<payload_len], encoding:
+                NSUTF8StringEncoding)!
+            print("PUBLISH TOPIC = \(topic) with Length = \(len)")
+            print("PACKET ID = \(packetIdentifier)")
+            print("PAYLOAD = \(payload)")
+            
+            switch qos {
+            case QOS.QOS0.rawValue:
+                print("None")
+            case QOS.QOS1.rawValue:
+                print("Send a PUBACK Packet")
+                self.puback(packetIdentifier)
+            case QOS.QOS2.rawValue:
+                print("Send a PUBREC Packet")
+            default:
+                break
+            }
         default:
             break;
         }
@@ -234,7 +297,7 @@ class uMQTT : NSObject, NSStreamDelegate {
     func unwrapFrame(frame:UInt8) -> () {
         switch client.status {
         case .UNPACK_HEADER:
-            switch frame {
+            switch (frame & 0b11110000) {
             case uMQTTControlFrameType.CONNACK.rawValue:
                 print("CONNACK Received")
                 client.currentFrame = .CONNACK
@@ -250,9 +313,11 @@ class uMQTT : NSObject, NSStreamDelegate {
             default:
                 print("Unkown Header")
             }
+            client.currentFrameFlags = frame & 0b00001111
             client.status = .UNPACK_LENGTH
         case .UNPACK_LENGTH:
             print("Lenght = \(frame)")
+            client.currentRemainingLength = frame
             readBufferLength = (Int)(frame)
             if(readBufferLength == 0){
                 readBufferLength = 1
@@ -448,4 +513,27 @@ class uMQTTSubscribeFrame: uMQTTFrame {
         self.payload.append(requestedQoS)
     }
     
+}
+
+class uMQTTPUBACKFrame: uMQTTFrame {
+
+    init(packetIdentifier: UInt16){
+        super.init(controlFrameType: uMQTTControlFrameType.PUBACK)
+        packetId = packetIdentifier
+        self.buildVariableHeader()
+        self.buildPayload()
+
+    }
+    
+    override func buildVariableHeader() {
+        self.variableHeader += self.packetId.highestLowest
+    }
+}
+
+class uMQTTDisconnectFrame: uMQTTFrame {
+    init(){
+        super.init(controlFrameType: uMQTTControlFrameType.DISCONNECT)
+        self.buildVariableHeader()
+        self.buildPayload()
+    }
 }

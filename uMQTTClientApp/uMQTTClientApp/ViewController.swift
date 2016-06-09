@@ -27,6 +27,10 @@ class ViewController: UIViewController, uMQTTDelegate {
         mqtt.subscribe("a/b")
     }
     
+    @IBAction func disconnect() {
+        mqtt.disconnectMQTTSocket();
+    }
+    
     func readyToSendMessage() {
         print("Ready to Work")
     }

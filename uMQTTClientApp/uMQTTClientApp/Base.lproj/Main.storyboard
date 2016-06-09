@@ -24,11 +24,20 @@
                                     <action selector="subscribe" destination="BYZ-38-t0r" eventType="touchUpInside" id="V3g-qw-ck0"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W04-1s-jEp">
+                                <rect key="frame" x="261" y="323" width="78" height="30"/>
+                                <state key="normal" title="Disconnect"/>
+                                <connections>
+                                    <action selector="disconnect" destination="BYZ-38-t0r" eventType="touchUpInside" id="xFl-CZ-2iO"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstItem="W04-1s-jEp" firstAttribute="centerX" secondItem="4K8-l5-PFf" secondAttribute="centerX" id="Akg-bB-n2c"/>
                             <constraint firstItem="4K8-l5-PFf" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="PSZ-O1-3s3"/>
                             <constraint firstItem="4K8-l5-PFf" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="QCt-dE-drU"/>
+                            <constraint firstItem="W04-1s-jEp" firstAttribute="top" secondItem="4K8-l5-PFf" secondAttribute="bottom" constant="8" symbolic="YES" id="igG-gf-huS"/>
                         </constraints>
                     </view>
                 </viewController>
