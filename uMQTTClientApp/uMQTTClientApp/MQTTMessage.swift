@@ -305,6 +305,9 @@ class uMQTT : NSObject, NSStreamDelegate {
             default:
                 break
             }
+        case .UNSUBACK:
+            var packetIdentifier = ((UInt16)(frame[0]) << 8) | (UInt16)(frame[1] & 0b0000000011111111)
+            print("PACKET ID = \(packetIdentifier)")
         default:
             break;
         }
@@ -399,7 +402,7 @@ private class uMQTTFrame {
     var controlPacketType : UInt8 {return UInt8(fixedHeader & 0b11110000)}
     var variableHeader : [UInt8] = []
     var payload :[UInt8] = []
-    var packetId : UInt16 = 0x0000
+    var packetId : UInt16 = 0x0001
     
     init(controlFrameType: uMQTTControlFrameType, flags:UInt8 = 0b00000000, payload: [UInt8] = []){
         self.fixedHeader = controlFrameType.rawValue | flags
@@ -541,10 +544,11 @@ private class uMQTTUnsubscribeFrame: uMQTTFrame {
     init(topic: String){
         super.init(controlFrameType: uMQTTControlFrameType.UNSUBSCRIBE, flags:0b00000010)
         self.buildVariableHeader()
-        self.buildPayload()
+        self.buildPayload(topic)
     }
     
     override func buildVariableHeader() {
+        self.packetId = 0x0011
         super.variableHeader += self.packetId.highestLowest
     }
     
