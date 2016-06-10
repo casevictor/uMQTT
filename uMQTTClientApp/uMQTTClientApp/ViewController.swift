@@ -15,7 +15,6 @@ class ViewController: UIViewController, uMQTTDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         mqtt.delegate = self
-        mqtt.openMQTTSocket()
         mqtt.connect()
     }
     
@@ -25,6 +24,14 @@ class ViewController: UIViewController, uMQTTDelegate {
     
     @IBAction func subscribe() {
         mqtt.subscribe("a/b")
+    }
+    
+    @IBAction func unsubscribe() {
+        mqtt.unsubscribe("a/b")
+    }
+    
+    @IBAction func publish() {
+        mqtt.publish("a/b", payload: "uMQTT works")
     }
     
     @IBAction func disconnect() {

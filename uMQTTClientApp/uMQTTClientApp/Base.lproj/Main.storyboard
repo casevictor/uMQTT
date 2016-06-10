@@ -24,8 +24,22 @@
                                     <action selector="subscribe" destination="BYZ-38-t0r" eventType="touchUpInside" id="V3g-qw-ck0"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eeL-Xj-qOD">
+                                <rect key="frame" x="257" y="323" width="87" height="30"/>
+                                <state key="normal" title="Unsubscribe"/>
+                                <connections>
+                                    <action selector="unsubscribe" destination="BYZ-38-t0r" eventType="touchUpInside" id="uMo-UN-LHc"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="vKc-Ld-oxN">
+                                <rect key="frame" x="275" y="361" width="51" height="30"/>
+                                <state key="normal" title="Publish"/>
+                                <connections>
+                                    <action selector="publish" destination="BYZ-38-t0r" eventType="touchUpInside" id="gRZ-Tc-g96"/>
+                                </connections>
+                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W04-1s-jEp">
-                                <rect key="frame" x="261" y="323" width="78" height="30"/>
+                                <rect key="frame" x="261" y="399" width="78" height="30"/>
                                 <state key="normal" title="Disconnect"/>
                                 <connections>
                                     <action selector="disconnect" destination="BYZ-38-t0r" eventType="touchUpInside" id="xFl-CZ-2iO"/>
@@ -34,10 +48,14 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="W04-1s-jEp" firstAttribute="centerX" secondItem="4K8-l5-PFf" secondAttribute="centerX" id="Akg-bB-n2c"/>
-                            <constraint firstItem="4K8-l5-PFf" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="PSZ-O1-3s3"/>
-                            <constraint firstItem="4K8-l5-PFf" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="QCt-dE-drU"/>
-                            <constraint firstItem="W04-1s-jEp" firstAttribute="top" secondItem="4K8-l5-PFf" secondAttribute="bottom" constant="8" symbolic="YES" id="igG-gf-huS"/>
+                            <constraint firstItem="vKc-Ld-oxN" firstAttribute="centerX" secondItem="W04-1s-jEp" secondAttribute="centerX" id="3vl-HO-OJ2"/>
+                            <constraint firstItem="4K8-l5-PFf" firstAttribute="centerX" secondItem="eeL-Xj-qOD" secondAttribute="centerX" id="6YM-gg-ZwV"/>
+                            <constraint firstItem="eeL-Xj-qOD" firstAttribute="top" secondItem="4K8-l5-PFf" secondAttribute="bottom" constant="8" symbolic="YES" id="Jak-Ws-V9T"/>
+                            <constraint firstItem="4K8-l5-PFf" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="kFa-5m-uCq"/>
+                            <constraint firstItem="4K8-l5-PFf" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="ndu-7h-85r"/>
+                            <constraint firstItem="vKc-Ld-oxN" firstAttribute="top" secondItem="eeL-Xj-qOD" secondAttribute="bottom" constant="8" symbolic="YES" id="o2a-SI-mYU"/>
+                            <constraint firstItem="eeL-Xj-qOD" firstAttribute="centerX" secondItem="vKc-Ld-oxN" secondAttribute="centerX" id="reC-NL-ehn"/>
+                            <constraint firstItem="W04-1s-jEp" firstAttribute="top" secondItem="vKc-Ld-oxN" secondAttribute="bottom" constant="8" symbolic="YES" id="zAb-Jm-CJP"/>
                         </constraints>
                     </view>
                 </viewController>
