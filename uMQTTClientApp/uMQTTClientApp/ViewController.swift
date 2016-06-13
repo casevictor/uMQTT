@@ -40,14 +40,28 @@ class ViewController: UIViewController, uMQTTDelegate {
         mqtt.disconnectMQTTSocket();
     }
     
+    
     func readyToSendMessage() {
         print("Ready to Work")
+    }
+    
+    func didSendMessage(message: String) {
+        print("\(message)")
     }
     
     func didReceivedMessage(message: String) {
         print("Message Arrived")
         dispatch_async(dispatch_get_main_queue(), {
             self.payloadLabel.text = message
+            self.resetBufferLabel()
+        })
+    }
+    
+    func resetBufferLabel() -> () {
+        let delay = 1.5 * Double(NSEC_PER_SEC)
+        let dispatchTime = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
+        dispatch_after(dispatchTime, dispatch_get_main_queue(), {
+            self.payloadLabel.text = "Payload"
         })
     }
 }

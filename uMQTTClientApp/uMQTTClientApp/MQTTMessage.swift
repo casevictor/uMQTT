@@ -82,6 +82,7 @@ enum SUBACKReturnCode : UInt8 {
 
 protocol uMQTTDelegate: class {
     func didReceivedMessage(message: String)
+    func didSendMessage(message:String)
     func readyToSendMessage()
 }
 
@@ -128,6 +129,7 @@ class uMQTT : NSObject, NSStreamDelegate {
             case NSStreamEvent.HasBytesAvailable:
                 print("(input) HasBytesAvailable")
                 
+                readBuffer = [UInt8](count: 1024, repeatedValue: 0)
                 let numBytes = inputStream!.read(&readBuffer, maxLength: readBufferLength)
                 print("\(numBytes) was read")
                 
@@ -202,6 +204,7 @@ class uMQTT : NSObject, NSStreamDelegate {
     
     func disconnectMQTTSocket() -> (){
         self.disconnectSocket()
+        self.endKeepAliveTimer()
     }
     
     func connect() -> () {
@@ -231,8 +234,8 @@ class uMQTT : NSObject, NSStreamDelegate {
         
     }
     
-    func publish(topic: String, payload: String, qos: UInt8 = 0) -> () {
-        let frame : uMQTTPublishFrame = uMQTTPublishFrame(topic: topic, payload: payload, dup: false, qos: qos, ret: false)
+    func publish(topic: String, payload: String, qos: UInt8 = 0, ret: Bool = false) -> () {
+        let frame : uMQTTPublishFrame = uMQTTPublishFrame(topic: topic, payload: payload, dup: false, qos: qos, ret: ret)
         let bytesToWire = frame.buildFrame()
         self.outputStream!.write(bytesToWire, maxLength: bytesToWire.count)
     }
@@ -293,7 +296,7 @@ class uMQTT : NSObject, NSStreamDelegate {
             var startIndex = 2
             let topic : String = String(bytes: frame[startIndex..<(startIndex+len)], encoding: NSUTF8StringEncoding)!
             if qos != 0b00000000 {
-                 packetIdentifier = ((UInt16)(frame[(startIndex+len)]) << 8) | (UInt16)(frame[(startIndex+len)+2] & 0b0000000011111111)
+                 packetIdentifier = ((UInt16)(frame[(startIndex+len)]) << 8) | (UInt16)(frame[(startIndex+len)+1] & 0b0000000011111111)
                 startIndex = (startIndex+len)+2
             }else{
                 startIndex = (startIndex+len)
@@ -464,10 +467,10 @@ private class uMQTTConnectFrame : uMQTTFrame {
     
     let MQTT : String = "MQTT"
     let clientId : String = NSUUID().UUIDString
-    let clientUsername : String = ""
-    let clientPassword : String = ""
-    let clientTopic : String = "sometopic"
-    let clientMessage : String = "somemessage"
+    var clientUsername : String = ""
+    var clientPassword : String = ""
+    let clientTopic : String = "a/b"
+    let clientMessage : String = "Disconnect"
     let clientKeepAlive : UInt16 = 60
     
     var connectedFlags : UInt8 = 0
@@ -497,10 +500,12 @@ private class uMQTTConnectFrame : uMQTTFrame {
         set { connectedFlags |= (newValue.bit << 1)}
     }
     
-    init(){
+    init(username:String = "", password: String = ""){
         super.init(controlFrameType: uMQTTControlFrameType.CONNECT)
+        self.clientUsername = username
+        self.clientPassword = password
         self.buildVariableHeader()
-        self.buildFlags(false, password: false, willRetain: false, willQoS: 0b00000001, will: true, cleanSession: true)
+        self.buildFlags(false, password: false, willRetain: false, willQoS: 0b00000001, will: true, cleanSession: false)
         self.buildKeepAlive()
         self.buildPayload()
     }
