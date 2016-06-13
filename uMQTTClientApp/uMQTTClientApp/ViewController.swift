@@ -49,7 +49,7 @@ class ViewController: UIViewController, uMQTTDelegate {
         print("\(message)")
     }
     
-    func didReceivedMessage(message: String) {
+    func didReceivedMessage(message: String, type:uMQTTControlFrameType) {
         print("Message Arrived")
         dispatch_async(dispatch_get_main_queue(), {
             self.payloadLabel.text = message

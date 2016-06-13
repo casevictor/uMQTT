@@ -15,7 +15,7 @@
 		45DD22B21D02199A002EE9C9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 45DD22B01D02199A002EE9C9 /* LaunchScreen.storyboard */; };
 		45DD22BD1D02199A002EE9C9 /* uMQTTClientAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45DD22BC1D02199A002EE9C9 /* uMQTTClientAppTests.swift */; };
 		45DD22C81D02199A002EE9C9 /* uMQTTClientAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45DD22C71D02199A002EE9C9 /* uMQTTClientAppUITests.swift */; };
-		45DD22D61D022795002EE9C9 /* MQTTMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45DD22D51D022795002EE9C9 /* MQTTMessage.swift */; };
+		45DD22D61D022795002EE9C9 /* uMQTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45DD22D51D022795002EE9C9 /* uMQTT.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,7 +50,7 @@
 		45DD22C31D02199A002EE9C9 /* uMQTTClientAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = uMQTTClientAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		45DD22C71D02199A002EE9C9 /* uMQTTClientAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = uMQTTClientAppUITests.swift; sourceTree = "<group>"; };
 		45DD22C91D02199A002EE9C9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		45DD22D51D022795002EE9C9 /* MQTTMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MQTTMessage.swift; sourceTree = "<group>"; };
+		45DD22D51D022795002EE9C9 /* uMQTT.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = uMQTT.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,7 +105,7 @@
 			children = (
 				45DD22A71D02199A002EE9C9 /* AppDelegate.swift */,
 				45DD22A91D02199A002EE9C9 /* ViewController.swift */,
-				45DD22D51D022795002EE9C9 /* MQTTMessage.swift */,
+				45DD22D51D022795002EE9C9 /* uMQTT.swift */,
 				45DD22AB1D02199A002EE9C9 /* Main.storyboard */,
 				45DD22AE1D02199A002EE9C9 /* Assets.xcassets */,
 				45DD22B01D02199A002EE9C9 /* LaunchScreen.storyboard */,
@@ -263,7 +263,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				45DD22D61D022795002EE9C9 /* MQTTMessage.swift in Sources */,
+				45DD22D61D022795002EE9C9 /* uMQTT.swift in Sources */,
 				45DD22AA1D02199A002EE9C9 /* ViewController.swift in Sources */,
 				45DD22A81D02199A002EE9C9 /* AppDelegate.swift in Sources */,
 			);

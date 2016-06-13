@@ -1,5 +1,5 @@
 //
-//  MQTTMessage
+//  uMQTT
 //  uMQTTClientApp
 //
 //  Created by Victor Casé on 6/3/16.
@@ -81,7 +81,7 @@ enum SUBACKReturnCode : UInt8 {
 }
 
 protocol uMQTTDelegate: class {
-    func didReceivedMessage(message: String)
+    func didReceivedMessage(message: String, type:uMQTTControlFrameType)
     func didSendMessage(message:String)
     func readyToSendMessage()
 }
@@ -310,6 +310,8 @@ class uMQTT : NSObject, NSStreamDelegate {
             print("DUP = \(dup)")
             print("RET = \(ret)")
             
+            self.delegate!.didReceivedMessage(payload, type: .PUBLISH)
+            
             switch qos {
             case QOS.QOS0.rawValue:
                 print("None")
@@ -322,7 +324,6 @@ class uMQTT : NSObject, NSStreamDelegate {
                 break
             }
             
-            self.delegate!.didReceivedMessage(payload)
         case .UNSUBACK:
             let packetIdentifier = ((UInt16)(frame[0]) << 8) | (UInt16)(frame[1] & 0b0000000011111111)
             print("PACKET ID = \(packetIdentifier)")
