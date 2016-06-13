@@ -12,6 +12,8 @@ class ViewController: UIViewController, uMQTTDelegate {
     
     let mqtt : uMQTT = uMQTT()
     
+    @IBOutlet weak var payloadLabel: UILabel!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         mqtt.delegate = self
@@ -42,8 +44,11 @@ class ViewController: UIViewController, uMQTTDelegate {
         print("Ready to Work")
     }
     
-    func didReceivedMessage() {
+    func didReceivedMessage(message: String) {
         print("Message Arrived")
+        dispatch_async(dispatch_get_main_queue(), {
+            self.payloadLabel.text = message
+        })
     }
 }
 

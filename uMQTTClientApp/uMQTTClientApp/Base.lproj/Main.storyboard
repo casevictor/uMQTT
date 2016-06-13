@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -24,6 +25,13 @@
                                     <action selector="subscribe" destination="BYZ-38-t0r" eventType="touchUpInside" id="V3g-qw-ck0"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W04-1s-jEp">
+                                <rect key="frame" x="261" y="399" width="78" height="30"/>
+                                <state key="normal" title="Disconnect"/>
+                                <connections>
+                                    <action selector="disconnect" destination="BYZ-38-t0r" eventType="touchUpInside" id="xFl-CZ-2iO"/>
+                                </connections>
+                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eeL-Xj-qOD">
                                 <rect key="frame" x="257" y="323" width="87" height="30"/>
                                 <state key="normal" title="Unsubscribe"/>
@@ -38,29 +46,67 @@
                                     <action selector="publish" destination="BYZ-38-t0r" eventType="touchUpInside" id="gRZ-Tc-g96"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W04-1s-jEp">
-                                <rect key="frame" x="261" y="399" width="78" height="30"/>
-                                <state key="normal" title="Disconnect"/>
-                                <connections>
-                                    <action selector="disconnect" destination="BYZ-38-t0r" eventType="touchUpInside" id="xFl-CZ-2iO"/>
-                                </connections>
-                            </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Payload" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ulh-JZ-uZl">
+                                <rect key="frame" x="166" y="18" width="429" height="41"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="429" id="gX8-XA-Ieb"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.50196078430000002" green="0.50196078430000002" blue="0.50196078430000002" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Received Buffer" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1Vr-5j-oiw">
+                                <rect key="frame" x="15" y="28" width="122" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.45882352939999999" green="0.7725490196" blue="0.76862745099999996" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Sent Buffer" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="aJO-Io-rL2">
+                                <rect key="frame" x="15" y="57" width="122" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.45882352939999999" green="0.7725490196" blue="0.76862745099999996" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Payload" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="9gZ-DL-Ljx">
+                                <rect key="frame" x="166" y="47" width="429" height="41"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="41" id="daf-Bw-rC6"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.50196078430000002" green="0.50196078430000002" blue="0.50196078430000002" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstItem="aJO-Io-rL2" firstAttribute="leading" secondItem="1Vr-5j-oiw" secondAttribute="leading" id="2IG-fm-DMd"/>
                             <constraint firstItem="vKc-Ld-oxN" firstAttribute="centerX" secondItem="W04-1s-jEp" secondAttribute="centerX" id="3vl-HO-OJ2"/>
+                            <constraint firstItem="Ulh-JZ-uZl" firstAttribute="leading" secondItem="1Vr-5j-oiw" secondAttribute="trailing" constant="29" id="5qI-9V-AIv"/>
                             <constraint firstItem="4K8-l5-PFf" firstAttribute="centerX" secondItem="eeL-Xj-qOD" secondAttribute="centerX" id="6YM-gg-ZwV"/>
+                            <constraint firstItem="1Vr-5j-oiw" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="-5" id="FOE-x4-oNW"/>
                             <constraint firstItem="eeL-Xj-qOD" firstAttribute="top" secondItem="4K8-l5-PFf" secondAttribute="bottom" constant="8" symbolic="YES" id="Jak-Ws-V9T"/>
+                            <constraint firstItem="9gZ-DL-Ljx" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="27" id="OQ0-gp-UMv"/>
+                            <constraint firstItem="1Vr-5j-oiw" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="8" symbolic="YES" id="e8r-Oz-aba"/>
+                            <constraint firstItem="aJO-Io-rL2" firstAttribute="top" secondItem="1Vr-5j-oiw" secondAttribute="bottom" constant="8" symbolic="YES" id="fT5-KI-GDK"/>
+                            <constraint firstItem="1Vr-5j-oiw" firstAttribute="centerY" secondItem="Ulh-JZ-uZl" secondAttribute="centerY" id="jUI-N4-AmQ"/>
                             <constraint firstItem="4K8-l5-PFf" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="kFa-5m-uCq"/>
+                            <constraint firstItem="Ulh-JZ-uZl" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="topMargin" constant="18" id="l99-0M-I0J"/>
                             <constraint firstItem="4K8-l5-PFf" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="ndu-7h-85r"/>
                             <constraint firstItem="vKc-Ld-oxN" firstAttribute="top" secondItem="eeL-Xj-qOD" secondAttribute="bottom" constant="8" symbolic="YES" id="o2a-SI-mYU"/>
                             <constraint firstItem="eeL-Xj-qOD" firstAttribute="centerX" secondItem="vKc-Ld-oxN" secondAttribute="centerX" id="reC-NL-ehn"/>
+                            <constraint firstItem="9gZ-DL-Ljx" firstAttribute="leading" secondItem="Ulh-JZ-uZl" secondAttribute="leading" id="tEh-k9-Pck"/>
+                            <constraint firstItem="aJO-Io-rL2" firstAttribute="trailing" secondItem="1Vr-5j-oiw" secondAttribute="trailing" id="vf3-o2-SJg"/>
+                            <constraint firstItem="9gZ-DL-Ljx" firstAttribute="trailing" secondItem="Ulh-JZ-uZl" secondAttribute="trailing" id="vpb-ny-wvh"/>
                             <constraint firstItem="W04-1s-jEp" firstAttribute="top" secondItem="vKc-Ld-oxN" secondAttribute="bottom" constant="8" symbolic="YES" id="zAb-Jm-CJP"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="payloadLabel" destination="Ulh-JZ-uZl" id="2Yk-F0-JBg"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
+            <point key="canvasLocation" x="507" y="228"/>
         </scene>
     </scenes>
 </document>
