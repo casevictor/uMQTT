@@ -109,6 +109,7 @@ class uMQTT : NSObject, NSStreamDelegate {
     weak var delegate: uMQTTDelegate?
     private var keepAliveTimer: NSTimer!
     var keepAliveInterval: UInt16 = 60
+    private var sendBuffer : [[UInt8]] = []
     
     init(host: String = "85.119.83.194", atPort:UInt32 = 1883){ // IP points to http://test.mosquitto.org/
         self.host = host
@@ -151,7 +152,6 @@ class uMQTT : NSObject, NSStreamDelegate {
             switch eventCode {
             case NSStreamEvent.ErrorOccurred:
                 print("(output) ErrorOcurred: \(aStream.streamError?.description)")
-                self.reopenMQTTSocket()
             case NSStreamEvent.OpenCompleted:
                 print("(output) OpenCompleted")
             case NSStreamEvent.HasSpaceAvailable:
@@ -208,6 +208,16 @@ class uMQTT : NSObject, NSStreamDelegate {
     }
     
     func connect() -> () {
+        if (inputStream.streamStatus == .Open || outputStream.streamStatus == .Open) {
+            print("Socket already connected")
+            return;
+        }
+        
+        if(inputStream.streamStatus == .Closed || outputStream.streamStatus == .Closed){
+            print("Reopening MQTT Socket")
+            self.reopenMQTTSocket()
+        }
+        
         self.startKeepAliveTimer()
         print("Socket connected to \(self.host) at \(self.port), sending MQTTConnected")
         let frame : uMQTTConnectFrame = uMQTTConnectFrame()
@@ -237,7 +247,12 @@ class uMQTT : NSObject, NSStreamDelegate {
     func publish(topic: String, payload: String, qos: UInt8 = 0, ret: Bool = false) -> () {
         let frame : uMQTTPublishFrame = uMQTTPublishFrame(topic: topic, payload: payload, dup: false, qos: qos, ret: ret)
         let bytesToWire = frame.buildFrame()
-        self.outputStream!.write(bytesToWire, maxLength: bytesToWire.count)
+        if(outputStream.streamStatus == .Open){
+            self.outputStream!.write(bytesToWire, maxLength: bytesToWire.count)
+        }else{
+            self.sendBuffer.append(bytesToWire)
+            print("Send to buffer")
+        }
     }
     
     func puback(packetIdentifier: UInt16) -> (){
@@ -258,6 +273,7 @@ class uMQTT : NSObject, NSStreamDelegate {
             switch frame[1] {
             case CONNACKReturnCode.ACCEPTED.rawValue:
                 print("Connection Accepted!")
+                self.checkSendBuffer()
             case CONNACKReturnCode.WRONG_PROTOCOL.rawValue:
                 print("Connection Refused, Wrong Protocol Version")
             case CONNACKReturnCode.ID_REJECTED.rawValue:
@@ -374,18 +390,15 @@ class uMQTT : NSObject, NSStreamDelegate {
         }
     }
     
-    func connackReceived(frame: UInt8) -> () {
-        
+    private func checkSendBuffer(){
+        if self.sendBuffer.count > 0 {
+            for frame in sendBuffer {
+                self.outputStream!.write(frame, maxLength: frame.count)
+            }
+            self.sendBuffer.removeAll()
+        }
     }
-    
-    func pingrespReceived() -> () {
-        print("PINGRESP Received")
-    }
-    
-    func disconnectReceived(){
-        print("DISCONNECT Received")
-    }
-    
+
     private func startKeepAliveTimer() {
         keepAliveTimer?.invalidate()
         keepAliveTimer = NSTimer.scheduledTimerWithTimeInterval(

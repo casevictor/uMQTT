@@ -36,6 +36,10 @@ class ViewController: UIViewController, uMQTTDelegate {
         mqtt.publish("a/b", payload: "uMQTT works")
     }
     
+    @IBAction func connect() {
+        mqtt.connect()
+    }
+    
     @IBAction func disconnect() {
         mqtt.disconnectMQTTSocket();
     }
