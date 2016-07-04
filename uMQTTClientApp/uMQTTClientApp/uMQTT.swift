@@ -529,18 +529,6 @@ private class uMQTTConnectFrame : uMQTTFrame {
         set { connectedFlags |= (newValue.bit << 1)}
     }
     
-    func randomString(length: Int) -> String {
-        let base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        var randomString: String = ""
-        
-        for _ in 0..<length {
-            let randomValue = arc4random_uniform(UInt32(base.characters.count))
-            randomString += "\(base[base.startIndex.advancedBy(Int(randomValue))])"
-        }
-        
-        return randomString
-    }
-    
     init(username:String?, password: String?, will: Bool = true, willRetain: Bool = false, willQoS: UInt8 = 0b000000001, cleanSession: Bool = false){
         super.init(controlFrameType: uMQTTControlFrameType.CONNECT)
         if let username = username {
