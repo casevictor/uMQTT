@@ -10,9 +10,11 @@ import UIKit
 
 class ViewController: UIViewController, uMQTTDelegate {
     
-    let mqtt : uMQTT = uMQTT()
+    let mqtt : uMQTT = uMQTT(host: "85.119.83.194", atPort: 1883)
     
     @IBOutlet weak var payloadLabel: UILabel!
+    @IBOutlet weak var sentBufferLabel: UILabel!
+    @IBOutlet weak var connectionStatusLabel: UILabel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -44,7 +46,18 @@ class ViewController: UIViewController, uMQTTDelegate {
         mqtt.disconnectMQTTSocket();
     }
     
+    func didConnectedWithSuccess(message: String) {
+        dispatch_async(dispatch_get_main_queue(), {
+            self.connectionStatusLabel.text = message
+        })
+    }
     
+    func didConnectedWithError(message: String) {
+        dispatch_async(dispatch_get_main_queue(), {
+            self.connectionStatusLabel.text = message
+        })
+    }
+
     func readyToSendMessage() {
         print("Ready to Work")
     }
@@ -54,7 +67,6 @@ class ViewController: UIViewController, uMQTTDelegate {
     }
     
     func didReceivedMessage(message: String, type:uMQTTControlFrameType) {
-        print("Message Arrived")
         dispatch_async(dispatch_get_main_queue(), {
             self.payloadLabel.text = message
             self.resetBufferLabel()

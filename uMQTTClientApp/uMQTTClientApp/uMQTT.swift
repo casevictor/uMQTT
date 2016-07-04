@@ -81,15 +81,18 @@ enum SUBACKReturnCode : UInt8 {
 }
 
 protocol uMQTTDelegate: class {
+    func didConnectedWithSuccess(message:String)
+    func didConnectedWithError(message:String)
     func didReceivedMessage(message: String, type:uMQTTControlFrameType)
     func didSendMessage(message:String)
     func readyToSendMessage()
+    func didConnectionErrorOcurred()
 }
 
 private class uMQTTClient {
     var status : ClientStatus
     var currentFrame : uMQTTControlFrameType
-    var currentRemainingLength : UInt8 = 0
+    var currentRemainingLength : Int = 0
     var currentFrameFlags : UInt8 = 0b00000000
     
     init(){
@@ -99,17 +102,26 @@ private class uMQTTClient {
 }
 
 class uMQTT : NSObject, NSStreamDelegate {
-    private var inputStream: NSInputStream!
-    private var outputStream: NSOutputStream!
-    private var readBuffer = [UInt8](count: 1024, repeatedValue: 0)
-    private var readBufferLength : Int = 1
+    
     private var host: CFString
     private var port: UInt32
+    
+    private var inputStream: NSInputStream!
+    private var outputStream: NSOutputStream!
+    private var readBuffer = [UInt8](count: 92160, repeatedValue: 0)
+    private var readBufferLength : Int = 1
+    private var sendBuffer : [[UInt8]] = []
+    
+    private var multiplier : Int = 1
+    private var value : Int = 0
+    
     private var client: uMQTTClient
     weak var delegate: uMQTTDelegate?
+    
     private var keepAliveTimer: NSTimer!
-    var keepAliveInterval: UInt16 = 60
-    private var sendBuffer : [[UInt8]] = []
+    var keepAliveInterval: UInt16 = 170
+    private var timer: dispatch_source_t! = nil
+    
     
     init(host: String = "85.119.83.194", atPort:UInt32 = 1883){ // IP points to http://test.mosquitto.org/
         self.host = host
@@ -124,13 +136,13 @@ class uMQTT : NSObject, NSStreamDelegate {
             switch eventCode {
             case NSStreamEvent.ErrorOccurred:
                 print("(input) ErrorOcurred: \(aStream.streamError?.description) ")
-                
+                self.delegate!.didConnectionErrorOcurred()
             case NSStreamEvent.OpenCompleted:
                 print("(input) OpenCompleted")
             case NSStreamEvent.HasBytesAvailable:
                 print("(input) HasBytesAvailable")
                 
-                readBuffer = [UInt8](count: 1024, repeatedValue: 0)
+                readBuffer = [UInt8](count: 92160, repeatedValue: 0)
                 let numBytes = inputStream!.read(&readBuffer, maxLength: readBufferLength)
                 print("\(numBytes) was read")
                 
@@ -164,7 +176,7 @@ class uMQTT : NSObject, NSStreamDelegate {
         }
     }
     
-    func connectSocket(host:String, port:UInt32) -> Bool {
+    func connectSocket(host:String, port:UInt32) {
         var readStream  : Unmanaged<CFReadStream>?
         var writeStream : Unmanaged<CFWriteStream>?
         
@@ -178,49 +190,22 @@ class uMQTT : NSObject, NSStreamDelegate {
             stream.open()
             stream.scheduleInRunLoop(NSRunLoop.currentRunLoop(), forMode: NSDefaultRunLoopMode)
         }
-        return true
         
     }
     
-    func disconnectSocket() -> () {
-        let socketStatus : NSStreamStatus = outputStream!.streamStatus
-        switch socketStatus {
-        case .Open:
-            inputStream!.close()
-            outputStream!.close()
-            print("Sockets closed")
-        default:
-            break
+    func disconnectSocket() {
+        for stream in [inputStream,outputStream]{
+            stream.close()
         }
     }
     
     func openMQTTSocket() -> () {
-        print("Socket Status: \(self.connectSocket(self.host as String, port: self.port))")
-    }
-    
-    private func reopenMQTTSocket() -> () {
-        print("Socket Reconnected : \(self.connectSocket(self.host as String, port: self.port))")
-    }
-    
-    func disconnectMQTTSocket() -> (){
-        self.disconnectSocket()
-        self.endKeepAliveTimer()
-    }
-    
-    func connect() -> () {
-        if (inputStream.streamStatus == .Open || outputStream.streamStatus == .Open) {
-            print("Socket already connected")
-            return;
-        }
-        
-        if(inputStream.streamStatus == .Closed || outputStream.streamStatus == .Closed){
-            print("Reopening MQTT Socket")
-            self.reopenMQTTSocket()
-        }
-        
+        self.connectSocket(self.host as String, port: self.port)
         self.startKeepAliveTimer()
-        print("Socket connected to \(self.host) at \(self.port), sending MQTTConnected")
-        let frame : uMQTTConnectFrame = uMQTTConnectFrame()
+    }
+    
+    func connect(username: String? = nil, password: String? = nil) -> () {
+        let frame : uMQTTConnectFrame = uMQTTConnectFrame(username: username, password: password)
         let bytesToWire = frame.buildFrame()
         self.outputStream!.write(bytesToWire, maxLength: bytesToWire.count)
     }
@@ -272,18 +257,18 @@ class uMQTT : NSObject, NSStreamDelegate {
         case .CONNACK:
             switch frame[1] {
             case CONNACKReturnCode.ACCEPTED.rawValue:
-                print("Connection Accepted!")
+                self.delegate!.didConnectedWithSuccess("Connection Accepted!")
                 self.checkSendBuffer()
             case CONNACKReturnCode.WRONG_PROTOCOL.rawValue:
-                print("Connection Refused, Wrong Protocol Version")
+                self.delegate!.didConnectedWithError("Connection Refused, Wrong Protocol Version")
             case CONNACKReturnCode.ID_REJECTED.rawValue:
-                print("Connection Refused, Client ID Rejected")
+                self.delegate!.didConnectedWithError("Connection Refused, Client ID Rejected")
             case CONNACKReturnCode.SERVER_UNAVAILABLE.rawValue:
-                print("Connection Refused, Server Unavailable")
+                self.delegate!.didConnectedWithError("Connection Refused, Server Unavailable")
             case CONNACKReturnCode.BAD_CREDENTIALS.rawValue:
-                print("Connection Refused, Bad Credentials")
+                self.delegate!.didConnectedWithError("Connection Refused, Bad Credentials")
             case CONNACKReturnCode.NOT_AUTHORIZED.rawValue:
-                print("Connection Refused, Not Authorized")
+                self.delegate!.didConnectedWithError("Connection Refused, Not Authorized")
             default:
                 print("Payload not recognized")
             }
@@ -310,34 +295,39 @@ class uMQTT : NSObject, NSStreamDelegate {
             var packetIdentifier : UInt16 = 0
             let payload_len = (Int)(client.currentRemainingLength)
             var startIndex = 2
-            let topic : String = String(bytes: frame[startIndex..<(startIndex+len)], encoding: NSUTF8StringEncoding)!
-            if qos != 0b00000000 {
-                 packetIdentifier = ((UInt16)(frame[(startIndex+len)]) << 8) | (UInt16)(frame[(startIndex+len)+1] & 0b0000000011111111)
-                startIndex = (startIndex+len)+2
-            }else{
-                startIndex = (startIndex+len)
-            }
-            
-            let payload : String = String(bytes: frame[startIndex..<payload_len], encoding:NSUTF8StringEncoding)!
-            
-            print("PUBLISH TOPIC = \(topic) with Length = \(len)")
-            print("PACKET ID = \(packetIdentifier)")
-            print("PAYLOAD = \(payload)")
-            print("DUP = \(dup)")
-            print("RET = \(ret)")
-            
-            self.delegate!.didReceivedMessage(payload, type: .PUBLISH)
-            
-            switch qos {
-            case QOS.QOS0.rawValue:
-                print("None")
-            case QOS.QOS1.rawValue:
-                print("Send a PUBACK Packet with packetID = \(packetIdentifier)")
-                self.puback(packetIdentifier)
-            case QOS.QOS2.rawValue:
-                print("Send a PUBREC Packet")
-            default:
-                break
+            if let topic = String(bytes: frame[startIndex..<(startIndex+len)], encoding: NSUTF8StringEncoding) {
+                print(topic)
+                
+                if qos != 0b00000000 {
+                    packetIdentifier = ((UInt16)(frame[(startIndex+len)]) << 8) | (UInt16)(frame[(startIndex+len)+1] & 0b0000000011111111)
+                    startIndex = (startIndex+len)+2
+                }else{
+                    startIndex = (startIndex+len)
+                }
+                
+                if ( payload_len > startIndex ) {
+                    let payload : String = String(bytes: frame[startIndex..<payload_len], encoding:NSUTF8StringEncoding)!
+                    
+                    print("PUBLISH TOPIC = \(topic) with Length = \(len)")
+                    print("PACKET ID = \(packetIdentifier)")
+                    print("PAYLOAD = \(payload)")
+                    print("DUP = \(dup)")
+                    print("RET = \(ret)")
+                    
+                    self.delegate!.didReceivedMessage(payload, type: .PUBLISH)
+                    
+                    switch qos {
+                    case QOS.QOS0.rawValue:
+                        print("None")
+                    case QOS.QOS1.rawValue:
+                        print("Send a PUBACK Packet with packetID = \(packetIdentifier)")
+                        self.puback(packetIdentifier)
+                    case QOS.QOS2.rawValue:
+                        print("Send a PUBREC Packet")
+                    default:
+                        break
+                    }
+                }
             }
             
         case .UNSUBACK:
@@ -370,15 +360,38 @@ class uMQTT : NSObject, NSStreamDelegate {
             case uMQTTControlFrameType.UNSUBACK.rawValue:
                 print("UNSUBACK Received")
                 client.currentFrame = .UNSUBACK
+            case uMQTTControlFrameType.PUBACK.rawValue:
+                print("PUBACK Received")
+                client.currentFrame = .PUBACK
             default:
                 print("Unkown Header")
+                client.status = .UNPACK_HEADER
+                return
             }
             client.currentFrameFlags = frame & 0b00001111
             client.status = .UNPACK_LENGTH
         case .UNPACK_LENGTH:
             print("Lenght = \(frame)")
-            client.currentRemainingLength = frame
-            readBufferLength = (Int)(frame)
+            let encodedByte = (Int)(frame)
+            self.value += (encodedByte & 127) * self.multiplier
+            self.multiplier *= 128
+            
+            if(self.multiplier > 128*128*128){
+                print("Malformated Remaining Length")
+                return
+            }
+            
+            if((encodedByte & 128) != 0){
+                client.status = .UNPACK_LENGTH
+                return
+            }
+            
+            client.currentRemainingLength = value
+            readBufferLength = value
+            
+            self.multiplier = 1
+            self.value = 0
+            
             if(readBufferLength == 0){
                 readBufferLength = 1
                 client.status = .UNPACK_HEADER
@@ -398,7 +411,7 @@ class uMQTT : NSObject, NSStreamDelegate {
             self.sendBuffer.removeAll()
         }
     }
-
+    
     private func startKeepAliveTimer() {
         keepAliveTimer?.invalidate()
         keepAliveTimer = NSTimer.scheduledTimerWithTimeInterval(
@@ -413,6 +426,8 @@ class uMQTT : NSObject, NSStreamDelegate {
         keepAliveTimer?.invalidate()
         keepAliveTimer = nil
     }
+    
+    
 }
 
 /**
@@ -448,10 +463,10 @@ private class uMQTTFrame {
     
     func encodedLength() -> [UInt8] {
         var byte : UInt8 = 0
-        var remainingLength = (UInt8)(self.variableHeader.count + self.payload.count)
+        var remainingLength = (Int)(self.variableHeader.count + self.payload.count)
         var encodedRemainingLength : [UInt8] = []
         repeat {
-            byte = remainingLength % 128
+            byte = UInt8((remainingLength % 128))
             remainingLength = remainingLength / 128
             if( remainingLength > 0){
                 byte = byte | 128
@@ -480,12 +495,12 @@ private class uMQTTPing : uMQTTFrame {
 private class uMQTTConnectFrame : uMQTTFrame {
     
     let MQTT : String = "MQTT"
-    let clientId : String = NSUUID().UUIDString
     var clientUsername : String = ""
     var clientPassword : String = ""
     let clientTopic : String = "a/b"
     let clientMessage : String = "Disconnect"
-    let clientKeepAlive : UInt16 = 60
+    let clientKeepAlive : UInt16 = 180
+    let userDefaults = NSUserDefaults.standardUserDefaults()
     
     var connectedFlags : UInt8 = 0
     var username : Bool {
@@ -514,12 +529,30 @@ private class uMQTTConnectFrame : uMQTTFrame {
         set { connectedFlags |= (newValue.bit << 1)}
     }
     
-    init(username:String = "", password: String = ""){
+    func randomString(length: Int) -> String {
+        let base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        var randomString: String = ""
+        
+        for _ in 0..<length {
+            let randomValue = arc4random_uniform(UInt32(base.characters.count))
+            randomString += "\(base[base.startIndex.advancedBy(Int(randomValue))])"
+        }
+        
+        return randomString
+    }
+    
+    init(username:String?, password: String?, will: Bool = true, willRetain: Bool = false, willQoS: UInt8 = 0b000000001, cleanSession: Bool = false){
         super.init(controlFrameType: uMQTTControlFrameType.CONNECT)
-        self.clientUsername = username
-        self.clientPassword = password
+        if let username = username {
+            self.clientUsername = username
+            self.username = true
+        }
+        if let password = password {
+            self.clientPassword = password
+            self.password = true
+        }
         self.buildVariableHeader()
-        self.buildFlags(false, password: false, willRetain: false, willQoS: 0b00000001, will: true, cleanSession: false)
+        self.buildFlags(self.username, password: self.password, willRetain: willRetain, willQoS: willQoS, will: will, cleanSession: cleanSession)
         self.buildKeepAlive()
         self.buildPayload()
     }
@@ -544,7 +577,7 @@ private class uMQTTConnectFrame : uMQTTFrame {
     }
     
     override func buildPayload() -> () {
-        self.payload += clientId.twoBytesLength
+        self.payload += (userDefaults.objectForKey("mqttClientId") as! String).twoBytesLength
         self.payload += clientTopic.twoBytesLength
         self.payload += clientMessage.twoBytesLength
         if (self.username) {self.payload += clientUsername.twoBytesLength}
@@ -553,7 +586,7 @@ private class uMQTTConnectFrame : uMQTTFrame {
 }
 
 private class uMQTTSubscribeFrame: uMQTTFrame {
-
+    
     var requestedQoS : UInt8 = 0b0000001
     
     init(topic: String){
@@ -562,7 +595,7 @@ private class uMQTTSubscribeFrame: uMQTTFrame {
         self.buildVariableHeader()
         self.buildPayload(topic)
     }
-
+    
     override func buildVariableHeader() {
         self.variableHeader += self.packetId.highestLowest
     }
@@ -639,13 +672,13 @@ private class uMQTTPublishFrame: uMQTTFrame {
 }
 
 private class uMQTTPUBACKFrame: uMQTTFrame {
-
+    
     init(packetIdentifier: UInt16){
         super.init(controlFrameType: uMQTTControlFrameType.PUBACK)
         packetId = packetIdentifier
         self.buildVariableHeader()
         self.buildPayload()
-
+        
     }
     
     override func buildVariableHeader() {
