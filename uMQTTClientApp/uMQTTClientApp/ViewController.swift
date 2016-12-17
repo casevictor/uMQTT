@@ -43,18 +43,24 @@ class ViewController: UIViewController, uMQTTDelegate {
     }
     
     @IBAction func disconnect() {
-        mqtt.disconnectMQTTSocket();
+        mqtt.disconnectSocket();
     }
     
-    func didConnectedWithSuccess(message: String) {
-        dispatch_async(dispatch_get_main_queue(), {
+    func didConnectedWithSuccess(_ message: String) {
+        DispatchQueue.main.async(execute: {
             self.connectionStatusLabel.text = message
         })
     }
     
-    func didConnectedWithError(message: String) {
-        dispatch_async(dispatch_get_main_queue(), {
+    func didConnectedWithError(_ message: String) {
+        DispatchQueue.main.async(execute: {
             self.connectionStatusLabel.text = message
+        })
+    }
+    
+    internal func didConnectionErrorOcurred() {
+        DispatchQueue.main.async(execute: {
+            self.connectionStatusLabel.text = "Error"
         })
     }
 
@@ -62,12 +68,12 @@ class ViewController: UIViewController, uMQTTDelegate {
         print("Ready to Work")
     }
     
-    func didSendMessage(message: String) {
+    func didSendMessage(_ message: String) {
         print("\(message)")
     }
     
-    func didReceivedMessage(message: String, type:uMQTTControlFrameType) {
-        dispatch_async(dispatch_get_main_queue(), {
+    func didReceivedMessage(_ message: String, type:uMQTTControlFrameType) {
+        DispatchQueue.main.async(execute: {
             self.payloadLabel.text = message
             self.resetBufferLabel()
         })
@@ -75,8 +81,8 @@ class ViewController: UIViewController, uMQTTDelegate {
     
     func resetBufferLabel() -> () {
         let delay = 1.5 * Double(NSEC_PER_SEC)
-        let dispatchTime = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
-        dispatch_after(dispatchTime, dispatch_get_main_queue(), {
+        let dispatchTime = DispatchTime.now() + Double(Int64(delay)) / Double(NSEC_PER_SEC)
+        DispatchQueue.main.asyncAfter(deadline: dispatchTime, execute: {
             self.payloadLabel.text = "Payload"
         })
     }
