@@ -120,6 +120,8 @@ private class uMQTTClient {
 
 class uMQTT : NSObject, StreamDelegate {
     
+    fileprivate var queue = DispatchQueue(label: "your.acme.mqtt", attributes: [])
+    
     fileprivate var host: CFString
     fileprivate var port: UInt32
     
@@ -160,26 +162,30 @@ class uMQTT : NSObject, StreamDelegate {
                 print("(input) OpenCompleted")
             case Stream.Event.hasBytesAvailable:
                 print("(input) HasBytesAvailable")
-                bytesRead = inputStream!.read(UnsafeMutablePointer(mutating: readBuffer) + completed, maxLength: readBufferLength - completed)
-                completed += bytesRead
                 
-                if(completed < readBufferLength){
-                    return;
-                }else{
-                    bytesRead = 0
-                    completed = 0
-                }
-                
-                switch client.status {
-                case .unpack_HEADER:
-                    self.unwrapFrame(readBuffer[0])
-                    break
-                case .unpack_LENGTH:
-                    self.unwrapFrame(readBuffer[0])
-                    break
-                case .unpack_VHEADER_PAYLOAD:
-                    self.unwrapPayload(readBuffer)
-                    break
+                queue.async {
+                    self.bytesRead = self.inputStream!.read(UnsafeMutablePointer(mutating: self.readBuffer) + self.completed, maxLength: self.readBufferLength - self.completed)
+                    self.completed += self.bytesRead
+                    
+                    if(self.completed < self.readBufferLength){
+                        return;
+                    }else{
+                        self.bytesRead = 0
+                        self.completed = 0
+                    }
+                    
+                    switch self.client.status {
+                    case .unpack_HEADER:
+                        self.unwrapFrame(self.readBuffer[0])
+                        break
+                        
+                    case .unpack_LENGTH:
+                        self.unwrapFrame(self.readBuffer[0])
+                        break
+                    case .unpack_VHEADER_PAYLOAD:
+                        self.unwrapPayload(self.readBuffer)
+                        break
+                    }
                 }
             default:
                 break
@@ -256,10 +262,12 @@ class uMQTT : NSObject, StreamDelegate {
     }
     
     func publish(_ topic: String, payload: String, qos: UInt8 = 0, ret: Bool = false) -> () {
-        let frame : uMQTTPublishFrame = uMQTTPublishFrame(topic: topic, payload: payload, dup: false, qos: qos, ret: ret)
-        let bytesToWire = frame.buildFrame()
-        if(outputStream.streamStatus == .open){
-            let writtenBytes = self.outputStream!.writeData(bytesToWire)
+        queue.async {
+            let frame : uMQTTPublishFrame = uMQTTPublishFrame(topic: topic, payload: payload, dup: false, qos: qos, ret: ret)
+            let bytesToWire = frame.buildFrame()
+            if(self.outputStream.streamStatus == .open){
+                let writtenBytes = self.outputStream!.writeData(bytesToWire)
+            }
         }
     }
     
