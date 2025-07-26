@@ -1,5 +1,6 @@
 # uMQTT
-An µ MQTT Client Library written in Swift easy to integrate and without external dependencies :)
+An µ MQTT Client Library written in Swift. It is easy to integrate and has no external
+dependencies. You can now also integrate it using the Swift Package Manager.
 
 # What is MQTT
 
@@ -26,6 +27,7 @@ You can wrap the uMQTT into your custom class, here a simple example of how you 
       private var umqtt : uMQTT
 
       private init(){
+        // autoconnect can be disabled for unit tests
         self.umqtt = uMQTT(host: "x.x.x.x", atPort: 1883)
         umqtt.delegate = self
     }
@@ -37,7 +39,7 @@ You can wrap the uMQTT into your custom class, here a simple example of how you 
     
     func restart(){
         print("uMQTT connection pool will restart")
-        self.umqtt = uMQTT(host: "x.x.x.x"), atPort:1883)
+        self.umqtt = uMQTT(host: "x.x.x.x", atPort: 1883)
         umqtt.delegate = self
         self.start()
     }
@@ -61,9 +63,30 @@ You can wrap the uMQTT into your custom class, here a simple example of how you 
     }
 ```
 
+The initializer automatically establishes the network connection. If you need to control when the socket is opened (for example in unit tests), pass `autoconnect: false`.
+
 #Broker List
 * https://github.com/emqtt/emqttd
 * https://github.com/eclipse/mosquitto
+
+
+## Swift Package Manager
+
+Add `uMQTT` as a dependency in your `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/yourusername/uMQTT.git", from: "1.0.0")
+]
+
+targets: [
+    .target(
+        name: "YourApp",
+        dependencies: ["uMQTT"])
+]
+```
+
+Then import `uMQTT` in your Swift sources.
 
 
 
